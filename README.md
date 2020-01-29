@@ -10,7 +10,7 @@ Here I run through some basic manipulations of a mesh.
     import halfedge_mesh
 
     # .off are supported
-    mesh = halfedge_mesh("my_meshes.off")
+    mesh = halfedge_mesh.HalfedgeMesh("my_meshes.off")
 
     # Returns a list of Vertex type (in order of file)--similarly for halfedges,
     # and facets

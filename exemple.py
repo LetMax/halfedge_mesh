@@ -11,7 +11,7 @@ mesh.vertices
 print("number of facets : " + str(len(mesh.facets)))
 
 # Get the 10th halfedge
-mesh.halfedges[10]
+#mesh.halfedges[10]
 
 # Get the halfedge that starts at vertex 25 and ends at vertex 50
 #mesh.get_halfedge(25, 50)
@@ -19,3 +19,6 @@ mesh.halfedges[10]
 # Iterate over the vertices of the mesh
 for i in mesh.vertices:
     print(i.get_vertex())
+
+for i in mesh.facets :
+	print(i.adjacent_faces())

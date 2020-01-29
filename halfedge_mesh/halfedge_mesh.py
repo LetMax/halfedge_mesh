@@ -295,7 +295,6 @@ class Vertex:
 
 
 class Facet:
-
     def __init__(self, a=-1, b=-1, c=-1, index=None, halfedge=None):
         """Create a facet with the given index with three vertices.
 
@@ -309,6 +308,27 @@ class Facet:
         self.index = index
         # halfedge going ccw around this facet.
         self.halfedge = halfedge
+
+    def adjacent_vertices(self):
+        return [self.a, self.b, self.c]
+
+    def adjacent_halfedges(self):
+        tab = []
+        first = self.halfedge
+        tmp = self.halfedge
+        while tmp.next != first:
+            tab.append(tmp)
+            tmp = tmp.next
+		
+        return tab
+
+    def adjacent_faces(self):
+        facets = []
+        adj = self.adjacent_halfedges()
+        for i in adj :
+            facets.append(i.opposite.facet)
+
+        return facets
 
     def __eq__(self, other):
         return self.a == other.a and self.b == other.b and self.c == other.c \
