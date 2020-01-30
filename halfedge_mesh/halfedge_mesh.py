@@ -52,12 +52,12 @@ class HalfedgeMesh:
                     self.read_file(filename)
 
     def __eq__(self, other):
-        return (isinstance(other, type(self)) and 
+        return (isinstance(other, type(self)) and
             (self.vertices, self.halfedges, self.facets) ==
             (other.vertices, other.halfedges, other.facets))
 
     def __hash__(self):
-        return (hash(str(self.vertices)) ^ hash(str(self.halfedges)) ^ hash(str(self.facets)) ^ 
+        return (hash(str(self.vertices)) ^ hash(str(self.halfedges)) ^ hash(str(self.facets)) ^
             hash((str(self.vertices), str(self.halfedges), str(self.facets))))
 
     def read_file(self, filename):
@@ -75,7 +75,7 @@ class HalfedgeMesh:
 
                 # TODO: build OBJ, PLY parsers
                 parser_dispatcher = {"OFF": self.parse_off}
-                                      
+
                 return parser_dispatcher[first_line](file)
 
         except IOError as e:
@@ -281,6 +281,29 @@ class Vertex:
 
         self.halfedge = halfedge
 
+    def adjacent_vertices(self):
+        adj = self.adjacent_halfedges()
+        tab = []
+        for i in adj:
+            tab.append(i.opposite.vertex)
+        return tab
+
+    def adjacent_faces(self):
+        adj = self.adjacent_halfedges()
+        tab = []
+        for i in adj:
+            tab.append(i.facet)
+        return tab
+
+    def adjacent_halfedges(self):
+        first = self.halfedge
+        next =  first.next.opposite
+        tab = [next]
+        while next != first:
+            tab.append(next = next.next.opposite)
+        return tab
+
+
     def __eq__(x, y):
         return x.__key() == y.__key() and type(x) == type(y)
 
@@ -319,7 +342,7 @@ class Facet:
         while tmp.next != first:
             tab.append(tmp)
             tmp = tmp.next
-		
+
         return tab
 
     def adjacent_faces(self):
@@ -380,6 +403,15 @@ class Halfedge:
         self.vertex = vertex
         self.facet = facet
         self.index = index
+
+    def adjacent_faces(self):
+        return self.vertex
+
+    def adjacent_vertices(self):
+        return self.opposite
+
+    def adjacent_halfedges(self):
+        return self.facet
 
     def __eq__(self, other):
         # TODO Test more
