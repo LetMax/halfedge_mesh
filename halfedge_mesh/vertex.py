@@ -19,6 +19,7 @@ class Vertex:
         self.y = y
         self.z = z
         self.vu = False
+        self.dist = 0
 
         self.index = index
 

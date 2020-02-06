@@ -2,6 +2,7 @@ import sys
 from . import config
 import math
 import functools
+import time
 from .facet import Facet
 from .vertex import Vertex
 from .halfedge import Halfedge
@@ -55,42 +56,90 @@ class HalfedgeMesh:
                     self.read_file(filename)
 
     def geodesique(self, s) :
+        debut = time.time()
+        print(debut)
         inf = float('inf')
         vertices = []
-        sommets = self.vertices[:]
-        sommets.remove(s)
-        distances = []
         for v in self.vertices :
             v.vu = False
-            if v == s :
-                distances.append(0)
-            else :
-                distances.append(inf)
+            v.dist = inf
+        sommets = self.vertices[:]
+        sommets.remove(s)
+        s.vu = True
+        s.dist = 0
 
         while len(sommets) != 0 :
             voisins = s.adjacent_vertices()
             for v in voisins :
-                nouvelle_dist = distances[s.index] + s.distance(v)
+                nouvelle_dist = s.dist + s.distance(v)
 
-                if sommets.count(v) == 1 :
+                if v.vu == False: # sommets.count(v) == 1 :
                     vertices.append([v, nouvelle_dist])
 
-                if distances[v.index] > nouvelle_dist :
-                    distances[v.index] = nouvelle_dist
+                if v.dist > nouvelle_dist :
+                    v.dist = nouvelle_dist
 
             vertices.sort(key = lambda vertices : vertices[1])
             i = 0
             s = vertices[i][0]
-            while sommets.count(s) < 1 :
+            while s.vu == True: # sommets.count(s) < 1 :
                 del vertices[i]
                 i += 1
                 s = vertices[i][0]
 
             del vertices[i]
-            print(len(sommets))
+            s.vu = True
             sommets.remove(s)
 
-        print(distances)
+        fin = time.time()
+        print(fin-debut)
+
+    def create_file(self, titre, color):
+        f = open(titre, "w")
+        if color:
+            f.write("COFF\n")
+        else:
+            f.write("OFF\n")
+        return f
+
+    def close_file(self, f):
+	   # f.write("</svg>")
+       f.close()
+
+    def color(self):
+        self.geodesique(self.vertices[2])
+        dist_max = 0
+        for v in self.vertices:
+            if dist_max < v.dist:
+                dist_max = v.dist
+        f = self.create_file("StrangeCOLOR.off", True)
+
+        self.write3(f, len(self.vertices), len(self.facets), len(self.edges))
+        f.write("\n")
+        print(dist_max)
+        for v in self.vertices:
+            self.write3(f, v.x, v.y, v.z)
+            f.write(" ")
+            if v.dist == 0:
+                self.write3(f, 0, 0, 0)
+            else:
+                tmp = 255 - (255 * (v.dist/dist_max))
+                self.write3(f, 255, tmp, tmp)
+            f.write("\n")
+
+        for face in self.facets:
+            f.write("3 ")
+            self.write3(f, face.a, face.b, face.c)
+            f.write("\n")
+        self.close_file(f)
+
+    def write3(self, file, one, two, three):
+        file.write(str(one))
+        file.write(" ")
+        file.write(str(two))
+        file.write(" ")
+        file.write(str(three))
+
 
 
     def __eq__(self, other):
