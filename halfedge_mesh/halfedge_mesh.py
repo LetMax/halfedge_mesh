@@ -1,6 +1,7 @@
 import sys
 from . import config
 import math
+import random
 import functools
 import time
 from .facet import Facet
@@ -55,6 +56,40 @@ class HalfedgeMesh:
             self.vertices, self.halfedges, self.facets, self.edges = \
                     self.read_file(filename)
 
+    def set_composantes_connexes(self) :
+        composante = 1
+        for v in self.vertices :
+            v.composante = -1
+            v.vu = False
+
+        vertices = self.vertices[:]
+        s = vertices[0]
+        vertices.remove(s)
+        s.vu = True
+        s.composante = composante
+        composante_tmp = []
+
+        while len(vertices) != 0 :
+            voisins = s.adjacent_vertices()
+            for v in voisins :
+                if composante_tmp.count(v) == 0 and v.vu == False:
+                    composante_tmp.append(v)
+                    v.composante = composante
+
+            if len(composante_tmp) == 0 :
+                s = vertices[0]
+                composante += 1
+                s.composante = composante
+            else:
+                s = composante_tmp[0]
+                del composante_tmp[0]
+
+            s.vu = True
+            vertices.remove(s)
+        print(composante)
+        return composante
+
+
     def geodesique(self, s) :
         debut = time.time()
         print(debut)
@@ -73,21 +108,19 @@ class HalfedgeMesh:
             for v in voisins :
                 nouvelle_dist = s.dist + s.distance(v)
 
-                if v.vu == False: # sommets.count(v) == 1 :
+                if v.vu == False:
                     vertices.append([v, nouvelle_dist])
 
                 if v.dist > nouvelle_dist :
                     v.dist = nouvelle_dist
 
             vertices.sort(key = lambda vertices : vertices[1])
-            i = 0
-            s = vertices[i][0]
-            while s.vu == True: # sommets.count(s) < 1 :
-                del vertices[i]
-                i += 1
-                s = vertices[i][0]
+            s = vertices[0][0]
+            while s.vu == True:
+                del vertices[0]
+                s = vertices[0][0]
 
-            del vertices[i]
+            del vertices[0]
             s.vu = True
             sommets.remove(s)
 
@@ -106,21 +139,49 @@ class HalfedgeMesh:
 	   # f.write("</svg>")
        f.close()
 
-    def color(self):
-        self.geodesique(self.vertices[2])
-        dist_max = 0
-        for v in self.vertices:
-            if dist_max < v.dist:
-                dist_max = v.dist
-        f = self.create_file("StrangeCOLOR.off", True)
+    def color_composante(self, titre):
+
+        nb_composantes = self.set_composantes_connexes()
+        tab = []
+        for i in range(nb_composantes):
+            tmp = []
+            tmp.append(random.uniform(0, 1))
+            tmp.append(random.uniform(0, 1))
+            tmp.append(random.uniform(0, 1))
+            tab.append(tmp[:])
+        print(tab)
+        f = self.create_file("figures_compo/" + titre + "CompColor.off", True)
 
         self.write3(f, len(self.vertices), len(self.facets), len(self.edges))
         f.write("\n")
-        print(dist_max)
         for v in self.vertices:
             self.write3(f, v.x, v.y, v.z)
             f.write(" ")
-            if v.dist == 0:
+            self.write3(f, 255 * tab[v.composante-1][0], 255 * tab[v.composante-1][1], 255 * tab[v.composante-1][2])
+            f.write("\n")
+
+        for face in self.facets:
+            f.write("3 ")
+            self.write3(f, face.a, face.b, face.c)
+            f.write("\n")
+        self.close_file(f)
+
+
+    def color_geodesique(self, titre):
+        self.geodesique(self.vertices[2])
+        dist_max = 0
+        inf = float('inf')
+        for v in self.vertices:
+            if dist_max < v.dist:
+                dist_max = v.dist
+        f = self.create_file("figures_geo/" + titre + "GeoColor.off", True)
+
+        self.write3(f, len(self.vertices), len(self.facets), len(self.edges))
+        f.write("\n")
+        for v in self.vertices:
+            self.write3(f, v.x, v.y, v.z)
+            f.write(" ")
+            if v.dist == 0 or v.dist == inf:
                 self.write3(f, 0, 0, 0)
             else:
                 tmp = 255 - (255 * (v.dist/dist_max))
