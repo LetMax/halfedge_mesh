@@ -81,3 +81,11 @@ class Facet:
         normal = normalize(normal)
 
         return normal
+
+    def write_face(self, file):
+        file.write(str(len(self.vertex)))
+        file.write(" ")
+        for v in self.vertex:
+            file.write(str(v))
+            file.write(" ")
+        file.write("\n")

@@ -1,8 +1,9 @@
-import halfedge_mesh
+from halfedge_mesh import *
+from halfedge_mesh.halfedge_mesh import *
 
 # .off are supported
-titre = "cube"
-mesh = halfedge_mesh.HalfedgeMesh("figures_normales/"+titre+".off")
+titre = "coloredcube"
+mesh = HalfedgeMesh("figures_normales/"+titre+".off")
 
 # Returns a list of Vertex type (in order of file)--similarly for halfedges,
 # and facets
@@ -16,9 +17,20 @@ mesh = halfedge_mesh.HalfedgeMesh("figures_normales/"+titre+".off")
 
 # Get the halfedge that starts at vertex 25 and ends at vertex 50
 #mesh.get_halfedge(25, 50)
-mesh.color_geodesique(titre)
-# mesh.set_composantes_connexes()
-#mesh.color_composante(titre)
+mesh.color_geodesique(mesh.vertices[0], titre)
+# print(mesh.set_composantes_connexes())
+# mesh.color_composante(titre)
+calul_time(mesh.geodesique, [mesh.vertices[0]])
 # mesh.geodesique(mesh.vertices[2])
-#for f in mesh.facets:
-#    print(f.vertex)
+for f in mesh.facets:
+    f.adjacent_faces
+    f.adjacent_vertices
+    f.adjacent_halfedges
+for f in mesh.halfedges:
+    f.adjacent_faces
+    f.adjacent_vertices
+    f.adjacent_halfedges
+for f in mesh.vertices:
+    f.adjacent_faces
+    f.adjacent_vertices
+    f.adjacent_halfedges

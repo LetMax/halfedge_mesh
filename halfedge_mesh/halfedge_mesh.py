@@ -86,13 +86,10 @@ class HalfedgeMesh:
 
             s.vu = True
             vertices.remove(s)
-        print(composante)
         return composante
 
 
     def geodesique(self, s) :
-        debut = time.time()
-        print(debut)
         inf = float('inf')
         nb_vert = len(self.vertices)
         voisins_calcules = []
@@ -109,7 +106,6 @@ class HalfedgeMesh:
             for v in voisins :
 
                 nouvelle_dist = s.dist + s.distance(v)
-
                 if v.dist > nouvelle_dist :
                     v.dist = nouvelle_dist
                     if v.vu == False:
@@ -125,23 +121,7 @@ class HalfedgeMesh:
             s.vu = True
             nb_vert -= 1
 
-        fin = time.time()
-        print(fin-debut)
-
-    def create_file(self, titre, color):
-        f = open(titre, "w")
-        if color:
-            f.write("COFF\n")
-        else:
-            f.write("OFF\n")
-        return f
-
-    def close_file(self, f):
-	   # f.write("</svg>")
-       f.close()
-
     def color_composante(self, titre):
-
         nb_composantes = self.set_composantes_connexes()
         tab = []
         for i in range(nb_composantes):
@@ -150,59 +130,43 @@ class HalfedgeMesh:
             tmp.append(random.uniform(0, 1))
             tmp.append(random.uniform(0, 1))
             tab.append(tmp[:])
-        print(tab)
-        f = self.create_file("figures_compo/" + titre + "CompColor.off", True)
+        file = create_file("figures_compo/" + titre + "CompColor.off", True)
 
-        self.write3(f, len(self.vertices), len(self.facets), len(self.edges))
-        f.write("\n")
+        write3(file, len(self.vertices), len(self.facets), len(self.edges))
+        file.write("\n")
         for v in self.vertices:
-            self.write3(f, v.x, v.y, v.z)
-            f.write(" ")
-            self.write3(f, 255 * tab[v.composante-1][0], 255 * tab[v.composante-1][1], 255 * tab[v.composante-1][2])
-            f.write("\n")
+            write3(file, v.x, v.y, v.z)
+            file.write(" ")
+            write3(file, 255 * tab[v.composante-1][0], 255 * tab[v.composante-1][1], 255 * tab[v.composante-1][2])
+            file.write("\n")
 
         for face in self.facets:
-            f.write("3 ")
-            self.write3(f, face.a, face.b, face.c)
-            f.write("\n")
-        self.close_file(f)
+            face.write_face(file)
+        close_file(file)
 
-
-    def color_geodesique(self, titre):
-        self.geodesique(self.vertices[2])
+    def color_geodesique(self, sommet, titre):
+        self.geodesique(sommet)
         dist_max = 0
         inf = float('inf')
         for v in self.vertices:
             if dist_max < v.dist:
                 dist_max = v.dist
-        f = self.create_file("figures_geo/" + titre + "GeoColor.off", True)
-
-        self.write3(f, len(self.vertices), len(self.facets), len(self.edges))
-        f.write("\n")
+        file = create_file("figures_geo/" + titre + "GeoColor.off", True)
+        write3(file, len(self.vertices), len(self.facets), len(self.edges))
+        file.write("\n")
         for v in self.vertices:
-            self.write3(f, v.x, v.y, v.z)
-            f.write(" ")
+            write3(file, v.x, v.y, v.z)
+            file.write(" ")
             if v.dist == 0 or v.dist == inf:
-                self.write3(f, 0, 0, 0)
+                write3(file, 0, 0, 0)
             else:
                 tmp = 255 - (255 * (v.dist/dist_max))
-                self.write3(f, 255, tmp, tmp)
-            f.write("\n")
+                write3(file, 255, tmp, tmp)
+            file.write("\n")
 
         for face in self.facets:
-            f.write("3 ")
-            self.write3(f, face.a, face.b, face.c)
-            f.write("\n")
-        self.close_file(f)
-
-    def write3(self, file, one, two, three):
-        file.write(str(one))
-        file.write(" ")
-        file.write(str(two))
-        file.write(" ")
-        file.write(str(three))
-
-
+            face.write_face(file)
+        close_file(file)
 
     def __eq__(self, other):
         return (isinstance(other, type(self)) and
@@ -297,10 +261,13 @@ class HalfedgeMesh:
 
             # convert strings to ints
             line = list(map(int, line))
-
+            nb_vert = line[0]
             # TODO: make general to support non-triangular meshes
             # Facets vertices are in counter-clockwise order
-            facet = Facet(line[1], line[2], line[3], index, [line[1], line[2], line[3]])
+            vertex = [0] * nb_vert
+            for i in range(nb_vert):
+                vertex[i] = line[i+1]
+            facet = Facet(line[1], line[2], line[3], index, vertex)
             facets.append(facet)
 
             # create pairing of vertices for example if the vertices are
@@ -308,10 +275,10 @@ class HalfedgeMesh:
             # note: we skip line[0] because it represents the number of vertices
             # in the facet.
             all_facet_edges = list(zip(line[1:], line[2:]))
-            all_facet_edges.append((line[3], line[1]))
+            all_facet_edges.append((line[nb_vert], line[1]))
 
             # For every halfedge around the facet
-            for i in xrange(3):
+            for i in xrange(nb_vert):
                 Edges[all_facet_edges[i]] = Halfedge()
                 Edges[all_facet_edges[i]].facet = facet
                 Edges[all_facet_edges[i]].vertex = vertices[
@@ -321,11 +288,11 @@ class HalfedgeMesh:
 
             facet.halfedge = Edges[all_facet_edges[0]]
 
-            for i in xrange(3):
+            for i in xrange(nb_vert):
                 Edges[all_facet_edges[i]].next = Edges[
-                    all_facet_edges[(i + 1) % 3]]
+                    all_facet_edges[(i + 1) % nb_vert]]
                 Edges[all_facet_edges[i]].prev = Edges[
-                    all_facet_edges[(i - 1) % 3]]
+                    all_facet_edges[(i - 1) % nb_vert]]
 
                 # reverse edge ordering of vertex, e.g. (1,2)->(2,1)
                 if all_facet_edges[i][2::-1] in Edges:
@@ -428,7 +395,6 @@ def allclose(v1, v2):
         (lambda x, y: abs(x - y) < config.EPSILON), v1, v2))
     return functools.reduce((lambda x, y: x and y), elementwise_compare)
 
-
 def make_iterable(obj):
     """Check if obj is iterable, if not return an iterable with obj inside it.
     Otherwise just return obj.
@@ -494,3 +460,27 @@ def create_vector(p1, p2):
     Return a list [x,y,z] for the coordinates of vector
     """
     return list(map((lambda x,y: x-y), p2, p1))
+
+def create_file(titre, color):
+    file = open(titre, "w")
+    if color:
+        file.write("COFF\n")
+    else:
+        file.write("OFF\n")
+    return file
+
+def close_file(file):
+    file.close()
+
+def write3(file, one, two, three):
+    file.write(str(one))
+    file.write(" ")
+    file.write(str(two))
+    file.write(" ")
+    file.write(str(three))
+
+def calul_time(fonction, params):
+    debut = time.time()
+    fonction(params[0])
+    fin = time.time()
+    print(" La fonction\n", fonction, "\n met", fin - debut, "secondes pour s'executé")
