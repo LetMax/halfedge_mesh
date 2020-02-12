@@ -1,7 +1,7 @@
 import halfedge_mesh
 
 # .off are supported
-titre = "strange"
+titre = "cube"
 mesh = halfedge_mesh.HalfedgeMesh("figures_normales/"+titre+".off")
 
 # Returns a list of Vertex type (in order of file)--similarly for halfedges,
