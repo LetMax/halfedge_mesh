@@ -58,6 +58,7 @@ class Vertex:
         return tab
 
 
+
     def __eq__(x, y):
         return x.__key() == y.__key() and type(x) == type(y)
 

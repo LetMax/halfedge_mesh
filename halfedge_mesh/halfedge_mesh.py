@@ -58,18 +58,18 @@ class HalfedgeMesh:
 
     def set_composantes_connexes(self) :
         composante = 1
+        nb_vert = len(self.vertices)
         for v in self.vertices :
             v.composante = -1
             v.vu = False
 
-        vertices = self.vertices[:]
-        s = vertices[0]
-        vertices.remove(s)
+        s = self.vertices[0]
         s.vu = True
+        nb_vert -= 1
         s.composante = composante
         composante_tmp = []
 
-        while len(vertices) != 0 :
+        while nb_vert > 0 :
             voisins = s.adjacent_vertices()
             for v in voisins :
                 if composante_tmp.count(v) == 0 and v.vu == False:
@@ -77,17 +77,50 @@ class HalfedgeMesh:
                     v.composante = composante
 
             if len(composante_tmp) == 0 :
-                s = vertices[0]
+                s = self.retrieve_vert()
                 composante += 1
                 s.composante = composante
             else:
                 s = composante_tmp[0]
                 del composante_tmp[0]
 
-            s.vu = True
-            vertices.remove(s)
+            if s.vu == False:
+                s.vu = True
+                nb_vert -= 1
         return composante
 
+    def genre_by_composante(self):
+        nb_composante = self.set_composantes_connexes()
+        tab = [0] * nb_composante
+
+        for i in range(nb_composante):
+            tab_halfedge = []
+            nb_verts = 0
+            for v in self.vertices:
+                if v.composante == i+1:
+                    nb_verts += 1
+            nb_faces = 0
+            for f in self.facets:
+                if f.halfedge.vertex.composante == i+1:
+                    nb_faces += 1
+            nb_edges = 0
+            for h in self.halfedges:
+                if h.vertex.composante == i+1:
+                    if h.opposite == None:
+                        tab_halfedge.append(h)
+
+                    nb_edges += 1
+            if tab_halfedge != []:
+                print(" Pour la composante", i, "il y as au moins un bord")
+            euler = nb_verts + nb_faces - (nb_edges/2)
+            tab[i] = int((2 - euler)/2)
+
+        return tab
+
+    def retrieve_vert(self):
+        for vert in self.vertices:
+            if vert.vu == False:
+                return vert
 
     def geodesique(self, s) :
         inf = float('inf')
@@ -126,18 +159,44 @@ class HalfedgeMesh:
         tab = []
         for i in range(nb_composantes):
             tmp = []
-            tmp.append(random.uniform(0, 1))
-            tmp.append(random.uniform(0, 1))
-            tmp.append(random.uniform(0, 1))
+            tmp.append(random.uniform(0, 1) * 255)
+            tmp.append(random.uniform(0, 1) * 255)
+            tmp.append(random.uniform(0, 1) * 255)
             tab.append(tmp[:])
         file = create_file("figures_compo/" + titre + "CompColor.off", True)
 
-        write3(file, len(self.vertices), len(self.facets), len(self.edges))
+        multiple_write(file, [len(self.vertices), len(self.facets), len(self.edges)])
         file.write("\n")
         for v in self.vertices:
-            write3(file, v.x, v.y, v.z)
+            multiple_write(file, [v.x, v.y, v.z])
             file.write(" ")
-            write3(file, 255 * tab[v.composante-1][0], 255 * tab[v.composante-1][1], 255 * tab[v.composante-1][2])
+            multiple_write(file,tab[v.composante-1])
+            file.write("\n")
+
+        for face in self.facets:
+            face.write_face(file)
+        close_file(file)
+
+    def color_genre(self, titre):
+        genre0 = [255, 255, 255]
+        genre1 = [255, 255, 255]
+        genre2 = [255, 255, 255]
+        genre3 = [255, 125, 0]
+        genre4 = [255, 255, 255]
+        genre5 = [255, 255, 255]
+        color = [genre0, genre1, genre2, genre3, genre4, genre5]
+        tab = self.genre_by_composante()
+        print(tab)
+        for i in range(len(tab)):
+            tab[i] = color[tab[i]]
+        print(tab)
+        file = create_file("figures_genre/" + titre + "GenreColor.off", True)
+        multiple_write(file, [len(self.vertices), len(self.facets), len(self.edges)])
+        file.write("\n")
+        for v in self.vertices:
+            multiple_write(file, [v.x, v.y, v.z])
+
+            multiple_write(file, tab[v.composante-1])
             file.write("\n")
 
         for face in self.facets:
@@ -152,16 +211,16 @@ class HalfedgeMesh:
             if dist_max < v.dist:
                 dist_max = v.dist
         file = create_file("figures_geo/" + titre + "GeoColor.off", True)
-        write3(file, len(self.vertices), len(self.facets), len(self.edges))
+        multiple_write(file, [len(self.vertices), len(self.facets), len(self.edges)])
         file.write("\n")
         for v in self.vertices:
-            write3(file, v.x, v.y, v.z)
+            multiple_write(file, [v.x, v.y, v.z])
             file.write(" ")
             if v.dist == 0 or v.dist == inf:
-                write3(file, 0, 0, 0)
+                multiple_write(file, [0, 0, 0])
             else:
                 tmp = 255 - (255 * (v.dist/dist_max))
-                write3(file, 255, tmp, tmp)
+                multiple_write(file, [255, tmp, tmp])
             file.write("\n")
 
         for face in self.facets:
@@ -472,15 +531,17 @@ def create_file(titre, color):
 def close_file(file):
     file.close()
 
-def write3(file, one, two, three):
-    file.write(str(one))
-    file.write(" ")
-    file.write(str(two))
-    file.write(" ")
-    file.write(str(three))
+def multiple_write(file, param):
+    for p in param:
+        file.write(str(p))
+        file.write(" ")
 
 def calul_time(fonction, params):
     debut = time.time()
-    fonction(params[0])
+    if params == []:
+        fonction()
+    else:
+        fonction(params)
     fin = time.time()
     print(" La fonction\n", fonction, "\n met", fin - debut, "secondes pour s'executé")
+    return fin - debut

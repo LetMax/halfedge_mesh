@@ -38,9 +38,12 @@ class Halfedge:
 
     def __eq__(self, other):
         # TODO Test more
-        return (self.vertex == other.vertex) and \
-               (self.prev.vertex == other.prev.vertex) and \
-               (self.index == other.index)
+        return  (type(self) == type(other)) and \
+                (self.vertex == other.vertex) and \
+                (self.prev.vertex == other.prev.vertex) and \
+                (self.index == other.index)
+
+
 
     def __hash__(self):
         return hash(self.opposite) ^ hash(self.next) ^ hash(self.prev) ^ \
