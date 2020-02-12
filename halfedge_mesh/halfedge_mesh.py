@@ -94,35 +94,36 @@ class HalfedgeMesh:
         debut = time.time()
         print(debut)
         inf = float('inf')
-        vertices = []
+        nb_vert = len(self.vertices)
+        voisins_calcules = []
         for v in self.vertices :
             v.vu = False
             v.dist = inf
-        sommets = self.vertices[:]
-        sommets.remove(s)
+
         s.vu = True
+        nb_vert -= 1
         s.dist = 0
 
-        while len(sommets) != 0 :
+        while nb_vert > 0 :
             voisins = s.adjacent_vertices()
             for v in voisins :
-                nouvelle_dist = s.dist + s.distance(v)
 
-                if v.vu == False:
-                    vertices.append([v, nouvelle_dist])
+                nouvelle_dist = s.dist + s.distance(v)
 
                 if v.dist > nouvelle_dist :
                     v.dist = nouvelle_dist
+                    if v.vu == False:
+                        voisins_calcules.append([v, nouvelle_dist])
 
-            vertices.sort(key = lambda vertices : vertices[1])
-            s = vertices[0][0]
+            voisins_calcules.sort(key = lambda voisins_calcules : voisins_calcules[1])
+            s = voisins_calcules[0][0]
             while s.vu == True:
-                del vertices[0]
-                s = vertices[0][0]
+                del voisins_calcules[0]
+                s = voisins_calcules[0][0]
 
-            del vertices[0]
+            del voisins_calcules[0]
             s.vu = True
-            sommets.remove(s)
+            nb_vert -= 1
 
         fin = time.time()
         print(fin-debut)
