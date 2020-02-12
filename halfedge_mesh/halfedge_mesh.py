@@ -238,7 +238,7 @@ class HalfedgeMesh:
 
             # TODO: make general to support non-triangular meshes
             # Facets vertices are in counter-clockwise order
-            facet = Facet(line[1], line[2], line[3], index)
+            facet = Facet(line[1], line[2], line[3], index, [line[1], line[2], line[3]])
             facets.append(facet)
 
             # create pairing of vertices for example if the vertices are
@@ -330,7 +330,7 @@ class HalfedgeMesh:
         # update neighboring halfedges
         for f in self.facets:
             hi = f.halfedge.index
-            flist.append(Facet(f.a, f.b, f.c, f.index,  hlist[hi]))
+            flist.append(Facet(f.a, f.b, f.c, f.index, f.vertex, hlist[hi]))
         self.facets = flist
 
 
