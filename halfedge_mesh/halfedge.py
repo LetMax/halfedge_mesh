@@ -36,6 +36,12 @@ class Halfedge:
     def adjacent_halfedges(self):
         return self.facet
 
+    def next_in_bord(self):
+        next = self.next
+        while next.opposite != None:
+            next = next.opposite.next
+        return next
+
     def __eq__(self, other):
         # TODO Test more
         return  (type(self) == type(other)) and \

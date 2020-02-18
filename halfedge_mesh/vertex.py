@@ -19,6 +19,7 @@ class Vertex:
         self.y = y
         self.z = z
         self.vu = False
+        self.traiter = False
         self.dist = 0
         self.composante = -1
 
@@ -38,7 +39,8 @@ class Vertex:
         adj = self.adjacent_halfedges()
         tab = []
         for i in adj:
-            tab.append(i.opposite.vertex)
+            if i .opposite != None:
+                tab.append(i.opposite.vertex)
         return tab
 
     def adjacent_faces(self):
@@ -50,14 +52,27 @@ class Vertex:
 
     def adjacent_halfedges(self):
         first = self.halfedge
+        tab = [first]
         next =  first.next.opposite
-        tab = [next]
-        while next != first:
-            next = next.next.opposite
+        if next != None:
             tab.append(next)
+            while next != first and next != None:
+                next = next.next.opposite
+                if next == None:
+                    break
+                tab.append(next)
+
+        if first.opposite != None:
+            prev =  first.opposite.prev
+            if prev != None:
+                tab.append(prev)
+                while prev != first and prev != None:
+
+                    if prev.opposite == None:
+                        break
+                    prev = prev.opposite.prev
+                    tab.append(prev)
         return tab
-
-
 
     def __eq__(x, y):
         return x.__key() == y.__key() and type(x) == type(y)

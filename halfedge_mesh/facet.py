@@ -21,7 +21,12 @@ class Facet:
         self.halfedge = halfedge
 
     def adjacent_vertices(self):
-        return self.vertex
+        halfedges = self.adjacent_halfedges()
+        tab = []
+        for halfedge in halfedges:
+            tab.append(halfedge.vertex)
+        return tab
+        # return self.vertex
 
     def adjacent_halfedges(self):
         tab = []
@@ -38,7 +43,6 @@ class Facet:
         adj = self.adjacent_halfedges()
         for i in adj :
             facets.append(i.opposite.facet)
-
         return facets
 
     def __eq__(self, other):
