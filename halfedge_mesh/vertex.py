@@ -54,9 +54,9 @@ class Vertex:
 
         continu = True
         first = self.halfedge
-        tab = [first]
+        tab = []
         next =  first.next.opposite
-        
+
         if next != None:
             tab.append(next)
             while next != first and next != None:
@@ -69,6 +69,7 @@ class Vertex:
             continu = False
 
         if continu:
+            tab.append(first)
             if first.opposite != None:
                 prev =  first.opposite.prev
                 if prev != None:

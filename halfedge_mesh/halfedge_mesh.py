@@ -121,7 +121,7 @@ class HalfedgeMesh:
             nb_bord = 0
 
             if tab_halfedge[i] != []:
-                print(" Pour la composante", i + 1, "il y as au moins un bord")
+                print(" Pour la composante", i + 1, "il y a au moins un bord")
                 while tab_halfedge[i] != []:
                     first = tab_halfedge[i][0]
                     del tab_halfedge[i][0]
@@ -134,9 +134,7 @@ class HalfedgeMesh:
 
 
             euler += nb_bord
-            print(euler)
             tab[i] = int((2 - euler)/2)
-        print(tab)
         return tab
 
     def retrieve_vert(self):
@@ -247,6 +245,8 @@ class HalfedgeMesh:
                 multiple_write(file, [0, 0, 0])
             elif v.dist == inf:
                 multiple_write(file, [0, 255, 0])
+            elif v.dist == dist_max:
+                multiple_write(file, [127, 255, 255])
             else:
                 tmp = 255 - (255 * (v.dist/dist_max))
                 multiple_write(file, [255, tmp, tmp])
@@ -565,12 +565,12 @@ def multiple_write(file, param):
         file.write(str(p))
         file.write(" ")
 
-def calul_time(fonction, params):
+def calcul_time(fonction, params):
     debut = time.time()
     if params == []:
         fonction()
     else:
         fonction(params[0])
     fin = time.time()
-    print(" La fonction\n", fonction, "\n met", fin - debut, "secondes pour s'executé")
+    print("\n La fonction\n", fonction, "\n met", fin - debut, "secondes pour s'executer")
     return fin - debut
