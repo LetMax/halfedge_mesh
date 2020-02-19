@@ -56,6 +56,95 @@ class HalfedgeMesh:
             self.vertices, self.halfedges, self.facets, self.edges = \
                     self.read_file(filename)
 
+    def k_moyenne(self, nb_classe):
+        min = float("inf")
+        max = 0
+
+        for face in self.facets :
+            face.classe = -1
+            tmp = face.calcul_perimetre()
+            if tmp < min :
+                min = tmp
+            if tmp > max :
+                max = tmp
+
+        tab = [0] * nb_classe
+        ecart = (max-min)/nb_classe
+        for i in range(len(tab)) :
+            tab[i] = min + (i) * ecart
+        # for i in range(len(tab)):
+        #     tab[i] = random.uniform(min, max)
+        change = True
+        while change:
+            change = False
+            print("*************************************")
+            for face in self.facets:
+                ecart_classe = float("inf")
+                for i, j in enumerate(tab):
+                    if abs(face.perimetre - j) < face.ecart :
+                        face.ecart = abs(face.perimetre - j)
+                        if face.classe != i:
+                            face.classe = i
+                            change = True
+            sum = [0] * nb_classe
+            count = [0] * nb_classe
+            for face in self.facets:
+                sum[face.classe] += face.perimetre
+                count[face.classe] += 1
+            for i in range(nb_classe):
+                tab[i] = sum[i]/count[i]
+            for face in self.facets:
+                face.ecart = abs(face.perimetre - tab[face.classe])
+
+
+
+
+    def classification(self, nb_classe):
+        min = float("inf")
+        max = 0
+
+        for face in self.facets :
+            tmp = face.calcul_perimetre()
+            if tmp < min :
+                min = tmp
+            if tmp > max :
+                max = tmp
+
+        tab = [0] * nb_classe
+        ecart = (max-min)/nb_classe
+        for i in range(len(tab)) :
+            tab[i] = min + (i) * ecart
+
+        for face in self.facets :
+            for i,j in enumerate(tab):
+                if face.perimetre >= j :
+                    face.classe = i
+
+    def color_classe(self, nb_classe, titre) :
+        self.k_moyenne(nb_classe)
+        tab = []
+        for i in range(nb_classe):
+            tmp = []
+            tmp.append(random.uniform(0, 1) * 255)
+            tmp.append(random.uniform(0, 1) * 255)
+            tmp.append(random.uniform(0, 1) * 255)
+            tab.append(tmp[:])
+
+        file = create_file("figures_classe/" + titre + "ClasseColor.off", True)
+
+        multiple_write(file, [len(self.vertices), len(self.facets), len(self.edges)])
+        file.write("\n")
+        for v in self.vertices:
+            multiple_write(file, [v.x, v.y, v.z])
+            file.write(" ")
+            file.write("\n")
+        for face in self.facets:
+            face.write_face(file)
+            multiple_write(file,tab[face.classe])
+            file.write("\n")
+
+        close_file(file)
+
     def set_composantes_connexes(self) :
         composante = 1
         nb_vert = len(self.vertices)
@@ -200,6 +289,7 @@ class HalfedgeMesh:
 
         for face in self.facets:
             face.write_face(file)
+            file.write("\n")
         close_file(file)
 
     def color_genre(self, titre):
@@ -226,6 +316,7 @@ class HalfedgeMesh:
 
         for face in self.facets:
             face.write_face(file)
+            file.write("\n")
         close_file(file)
 
     def color_geodesique(self, sommet, titre):
@@ -254,6 +345,7 @@ class HalfedgeMesh:
 
         for face in self.facets:
             face.write_face(file)
+            file.write("\n")
         close_file(file)
 
     def __eq__(self, other):

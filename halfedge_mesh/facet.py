@@ -5,7 +5,7 @@ import functools
 from .vertex import Vertex
 
 class Facet:
-    def __init__(self, a=-1, b=-1, c=-1, index=None, vertex = [], halfedge=None):
+    def __init__(self, a=-1, b=-1, c=-1, index=None, vertex = [], halfedge=None, perimetre = -1, classe = -1, ecart=float("inf")):
         """Create a facet with the given index with three vertices.
 
         a, b, c - indices for the vertices in the facet, counter clockwise.
@@ -19,6 +19,16 @@ class Facet:
         self.index = index
         # halfedge going ccw around this facet.
         self.halfedge = halfedge
+        self.perimetre = perimetre
+        self.classe = classe
+        self.ecart = ecart
+
+    def calcul_perimetre(self):
+        perimetre = 0
+        for v in self.adjacent_halfedges():
+            perimetre += v.calcul_distance()
+        self.perimetre = perimetre
+        return perimetre
 
     def adjacent_vertices(self):
         halfedges = self.adjacent_halfedges()
@@ -91,4 +101,3 @@ class Facet:
         for v in self.vertex:
             file.write(str(v))
             file.write(" ")
-        file.write("\n")

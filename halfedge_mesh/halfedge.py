@@ -18,7 +18,7 @@ class Halfedge:
         self.facet = facet
         self.index = index
 
-    def distance(self) :
+    def calcul_distance(self) :
         S1 = self.vertex
         S2 = self.opposite.vertex
         deltaX = abs(S1.x - S2.x)
