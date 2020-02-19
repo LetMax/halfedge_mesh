@@ -26,7 +26,6 @@ class Facet:
         for halfedge in halfedges:
             tab.append(halfedge.vertex)
         return tab
-        # return self.vertex
 
     def adjacent_halfedges(self):
         tab = []

@@ -51,9 +51,12 @@ class Vertex:
         return tab
 
     def adjacent_halfedges(self):
+
+        continu = True
         first = self.halfedge
         tab = [first]
         next =  first.next.opposite
+        
         if next != None:
             tab.append(next)
             while next != first and next != None:
@@ -62,16 +65,20 @@ class Vertex:
                     break
                 tab.append(next)
 
-        if first.opposite != None:
-            prev =  first.opposite.prev
-            if prev != None:
-                tab.append(prev)
-                while prev != first and prev != None:
+        if first == next:
+            continu = False
 
-                    if prev.opposite == None:
-                        break
-                    prev = prev.opposite.prev
+        if continu:
+            if first.opposite != None:
+                prev =  first.opposite.prev
+                if prev != None:
                     tab.append(prev)
+                    while prev != first and prev != None:
+
+                        if prev.opposite == None:
+                            break
+                        prev = prev.opposite.prev
+                        tab.append(prev)
         return tab
 
     def __eq__(x, y):

@@ -118,10 +118,10 @@ class HalfedgeMesh:
         for i in range(len(count)):
 
             euler = count[i][0] + count[i][1] - ((count[i][2]+len(tab_halfedge[i]))/2)
+            nb_bord = 0
 
             if tab_halfedge[i] != []:
                 print(" Pour la composante", i + 1, "il y as au moins un bord")
-                nb_bord = 0
                 while tab_halfedge[i] != []:
                     first = tab_halfedge[i][0]
                     del tab_halfedge[i][0]
@@ -206,11 +206,11 @@ class HalfedgeMesh:
 
     def color_genre(self, titre):
         genre0 = [255, 255, 255]
-        genre1 = [127, 255, 255]
+        genre1 = [127, 127, 255]
         genre2 = [0, 255, 255]
-        genre3 = [255, 127, 255]
+        genre3 = [255, 127, 127]
         genre4 = [255, 0, 255]
-        genre5 = [255, 255, 127]
+        genre5 = [127, 255, 127]
         genre6 = [255, 255, 0]
         genre7 = [0, 0, 0]
         color = [genre0, genre1, genre2, genre3, genre4, genre5, genre6, genre7]
