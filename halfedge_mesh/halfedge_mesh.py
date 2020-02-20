@@ -7,6 +7,7 @@ import time
 from .facet import Facet
 from .vertex import Vertex
 from .halfedge import Halfedge
+from .functions import *
 
 # python3 compatibility
 try:
@@ -57,6 +58,9 @@ class HalfedgeMesh:
                     self.read_file(filename)
 
     def k_moyenne(self, nb_classe):
+        color_tab = [0] * nb_classe
+        for i in range(nb_classe):
+            color_tab[i] = random_color()
         min = float("inf")
         max = 0
 
@@ -68,23 +72,22 @@ class HalfedgeMesh:
             if tmp > max :
                 max = tmp
 
-        tab = [0] * nb_classe
+        tab_classe = [0] * nb_classe
         ecart = (max-min)/nb_classe
-        for i in range(len(tab)) :
-            tab[i] = min + (i) * ecart
-        # for i in range(len(tab)):
-        #     tab[i] = random.uniform(min, max)
+        for i in range(nb_classe) :
+            tab_classe[i] = min + (i) * ecart
+            
         change = True
         while change:
             change = False
-            print("*************************************")
             for face in self.facets:
                 ecart_classe = float("inf")
-                for i, j in enumerate(tab):
+                for i, j in enumerate(tab_classe):
                     if abs(face.perimetre - j) < face.ecart :
                         face.ecart = abs(face.perimetre - j)
                         if face.classe != i:
                             face.classe = i
+                            face.color = color_tab[i]
                             change = True
             sum = [0] * nb_classe
             count = [0] * nb_classe
@@ -92,14 +95,14 @@ class HalfedgeMesh:
                 sum[face.classe] += face.perimetre
                 count[face.classe] += 1
             for i in range(nb_classe):
-                tab[i] = sum[i]/count[i]
+                tab_classe[i] = sum[i]/count[i]
             for face in self.facets:
-                face.ecart = abs(face.perimetre - tab[face.classe])
-
-
-
+                face.ecart = abs(face.perimetre - tab_classe[face.classe])
 
     def classification(self, nb_classe):
+        color_tab = [0] * nb_classe
+        for i in range(nb_classe):
+            color_tab[i] = random_color()
         min = float("inf")
         max = 0
 
@@ -110,42 +113,25 @@ class HalfedgeMesh:
             if tmp > max :
                 max = tmp
 
-        tab = [0] * nb_classe
+        tab_classe = [0] * nb_classe
         ecart = (max-min)/nb_classe
-        for i in range(len(tab)) :
-            tab[i] = min + (i) * ecart
+        for i in range(len(tab_classe)) :
+            tab_classe[i] = min + (i) * ecart
 
         for face in self.facets :
-            for i,j in enumerate(tab):
+            for i,j in enumerate(tab_classe):
                 if face.perimetre >= j :
                     face.classe = i
+                    face.color = color_tab[i]
 
     def color_classe(self, nb_classe, titre) :
         self.k_moyenne(nb_classe)
-        tab = []
-        for i in range(nb_classe):
-            tmp = []
-            tmp.append(random.uniform(0, 1) * 255)
-            tmp.append(random.uniform(0, 1) * 255)
-            tmp.append(random.uniform(0, 1) * 255)
-            tab.append(tmp[:])
-
-        file = create_file("figures_classe/" + titre + "ClasseColor.off", True)
-
-        multiple_write(file, [len(self.vertices), len(self.facets), len(self.edges)])
-        file.write("\n")
-        for v in self.vertices:
-            multiple_write(file, [v.x, v.y, v.z])
-            file.write(" ")
-            file.write("\n")
-        for face in self.facets:
-            face.write_face(file)
-            multiple_write(file,tab[face.classe])
-            file.write("\n")
-
-        close_file(file)
+        # self.classification(nb_classe)
+        self.write_mesh(True, "figures_classe/" + titre + "ClasseColor.off")
 
     def set_composantes_connexes(self) :
+        tab = random_color()
+
         composante = 1
         nb_vert = len(self.vertices)
         for v in self.vertices :
@@ -166,11 +152,13 @@ class HalfedgeMesh:
                 if v.vu == False:
                     composante_tmp.append(v)
                     v.composante = composante
+                    v.color = tab
                     v.vu = True
 
             if len(composante_tmp) == 0 :
                 s = self.retrieve_vert()
                 composante += 1
+                tab = random_color()
                 s.composante = composante
             else:
                 s = composante_tmp[0]
@@ -181,50 +169,57 @@ class HalfedgeMesh:
                 nb_vert -= 1
         return composante
 
-    def genre_by_composante(self):
-        nb_composante = self.set_composantes_connexes()
-        tab = [0] * nb_composante
-        tab_halfedge = tab[:]
-        count = tab[:]
-        tmp = [0, 0, 0]
+    def count_composante(self, nb_composante):
+        tab_halfedge = [0] * nb_composante
+        count = [0] * nb_composante
+        tmp = [0] * 3
         tmp2 = []
         for i in range(nb_composante):
             count[i] = tmp[:]
             tab_halfedge[i] = tmp2[:]
 
-        nb_verts = 0
         for v in self.vertices:
             count[v.composante-1][0] += 1
-        nb_faces = 0
+
         for f in self.facets:
             count[f.halfedge.vertex.composante-1][1] += 1
-        nb_edges = 0
+
         for h in self.halfedges:
             if h.opposite == None:
                 tab_halfedge[h.vertex.composante-1].append(h)
             count[h.vertex.composante-1][2] += 1
+        return count, tab_halfedge
 
+    def genre_by_composante(self):
+        nb_composante = self.set_composantes_connexes()
+        tab = [0] * nb_composante
+        count, tab_halfedge  = self.count_composante(nb_composante)
         for i in range(len(count)):
 
             euler = count[i][0] + count[i][1] - ((count[i][2]+len(tab_halfedge[i]))/2)
-            nb_bord = 0
-
-            if tab_halfedge[i] != []:
-                print(" Pour la composante", i + 1, "il y a au moins un bord")
-                while tab_halfedge[i] != []:
-                    first = tab_halfedge[i][0]
-                    del tab_halfedge[i][0]
-                    next = first.next_in_bord()
-                    while next != first:
-                        tab_halfedge[i].remove(next)
-                        next = next.next_in_bord()
-                    nb_bord += 1
-
-
-
+            nb_bord = count_bord(tab_halfedge[i])
             euler += nb_bord
             tab[i] = int((2 - euler)/2)
         return tab
+
+    def set_color_genre(self):
+        tab = self.genre_by_composante()
+        genre0 = [255, 255, 255]
+        genre1 = [127, 127, 255]
+        genre2 = [0, 255, 255]
+        genre3 = [255, 127, 127]
+        genre4 = [255, 0, 255]
+        genre5 = [127, 255, 127]
+        genre6 = [255, 255, 0]
+        genre7 = [0, 0, 0]
+        color = [genre0, genre1, genre2, genre3, genre4, genre5, genre6, genre7]
+        tab = self.genre_by_composante()
+        for i in range(len(tab)):
+            tab[i] = color[tab[i]]
+
+        for vert in self.vertices:
+            vert.color = tab[vert.composante-1]
+
 
     def retrieve_vert(self):
         for vert in self.vertices:
@@ -233,6 +228,7 @@ class HalfedgeMesh:
 
     def geodesique(self, s) :
         inf = float('inf')
+        dist_max = 0
         continu = True
         nb_vert = len(self.vertices)
         voisins_calcules = []
@@ -264,88 +260,49 @@ class HalfedgeMesh:
                     s = voisins_calcules[0][0]
                     del voisins_calcules[0]
 
-
             s.traiter = True
+            if s.dist > dist_max:
+                dist_max = s.dist
             nb_vert -= 1
+        return dist_max
+
+    def set_color_dist(self, sommet):
+        inf = float("inf")
+        dist_max = self.geodesique(sommet)
+        for vert in self.vertices:
+            if vert.dist == 0:
+                vert.color = [0, 0, 0]
+            elif vert.dist == inf:
+                vert.color = [0, 255, 0]
+            elif vert.dist == dist_max:
+                vert.color = [127, 255, 255]
+            else:
+                tmp = 255 - (255 * (vert.dist/dist_max))
+                vert.color = [255, tmp, tmp]
 
     def color_composante(self, titre):
         nb_composantes = self.set_composantes_connexes()
-        tab = []
-        for i in range(nb_composantes):
-            tmp = []
-            tmp.append(random.uniform(0, 1) * 255)
-            tmp.append(random.uniform(0, 1) * 255)
-            tmp.append(random.uniform(0, 1) * 255)
-            tab.append(tmp[:])
-        file = create_file("figures_compo/" + titre + "CompColor.off", True)
-
-        multiple_write(file, [len(self.vertices), len(self.facets), len(self.edges)])
-        file.write("\n")
-        for v in self.vertices:
-            multiple_write(file, [v.x, v.y, v.z])
-            file.write(" ")
-            multiple_write(file,tab[v.composante-1])
-            file.write("\n")
-
-        for face in self.facets:
-            face.write_face(file)
-            file.write("\n")
-        close_file(file)
+        self.write_mesh(True, "figures_compo/" + titre + "CompColor.off")
 
     def color_genre(self, titre):
-        genre0 = [255, 255, 255]
-        genre1 = [127, 127, 255]
-        genre2 = [0, 255, 255]
-        genre3 = [255, 127, 127]
-        genre4 = [255, 0, 255]
-        genre5 = [127, 255, 127]
-        genre6 = [255, 255, 0]
-        genre7 = [0, 0, 0]
-        color = [genre0, genre1, genre2, genre3, genre4, genre5, genre6, genre7]
-        tab = self.genre_by_composante()
-        for i in range(len(tab)):
-            tab[i] = color[tab[i]]
-        file = create_file("figures_genre/" + titre + "GenreColor.off", True)
-        multiple_write(file, [len(self.vertices), len(self.facets), len(self.edges)])
-        file.write("\n")
-        for v in self.vertices:
-            multiple_write(file, [v.x, v.y, v.z])
-
-            multiple_write(file, tab[v.composante-1])
-            file.write("\n")
-
-        for face in self.facets:
-            face.write_face(file)
-            file.write("\n")
-        close_file(file)
+        self.set_color_genre()
+        self.write_mesh(True, "figures_genre/" + titre + "GenreColor.off")
 
     def color_geodesique(self, sommet, titre):
-        self.geodesique(sommet)
-        dist_max = 0
-        inf = float('inf')
-        for v in self.vertices:
-            if dist_max < v.dist and v.dist != inf:
-                dist_max = v.dist
-        file = create_file("figures_geo/" + titre + "GeoColor.off", True)
+        self.set_color_dist(sommet)
+        self.write_mesh(True, "figures_geo/" + titre + "GeoColor.off")
+
+    def write_mesh(self, color, titre):
+        file = create_file(titre, color)
+
         multiple_write(file, [len(self.vertices), len(self.facets), len(self.edges)])
         file.write("\n")
         for v in self.vertices:
-            multiple_write(file, [v.x, v.y, v.z])
-            file.write(" ")
-            if v.dist == 0:
-                multiple_write(file, [0, 0, 0])
-            elif v.dist == inf:
-                multiple_write(file, [0, 255, 0])
-            elif v.dist == dist_max:
-                multiple_write(file, [127, 255, 255])
-            else:
-                tmp = 255 - (255 * (v.dist/dist_max))
-                multiple_write(file, [255, tmp, tmp])
-            file.write("\n")
+            v.write_vertex(file)
 
         for face in self.facets:
             face.write_face(file)
-            file.write("\n")
+
         close_file(file)
 
     def __eq__(self, other):
@@ -559,110 +516,3 @@ class HalfedgeMesh:
             i += 1
 
         self.halfedges = hlist
-
-def allclose(v1, v2):
-    """Compare if v1 and v2 are close
-
-    v1, v2 - any numerical type or list/tuple of numerical types
-
-    Return bool if vectors are close, up to some epsilon specified in config.py
-    """
-
-    v1 = make_iterable(v1)
-    v2 = make_iterable(v2)
-
-    elementwise_compare = list(map(
-        (lambda x, y: abs(x - y) < config.EPSILON), v1, v2))
-    return functools.reduce((lambda x, y: x and y), elementwise_compare)
-
-def make_iterable(obj):
-    """Check if obj is iterable, if not return an iterable with obj inside it.
-    Otherwise just return obj.
-
-    obj - any type
-
-    Return an iterable
-    """
-    try:
-        iter(obj)
-    except:
-        return [obj]
-    else:
-        return obj
-
-
-def dot(v1, v2):
-    """Dot product(inner product) of v1 and v2
-
-    v1, v2 - python list
-
-    Return v1 dot v2
-    """
-    elementwise_multiply = list(map((lambda x, y: x * y), v1, v2))
-    return functools.reduce((lambda x, y: x + y), elementwise_multiply)
-
-
-def norm(vec):
-    """ Return the Euclidean norm of a 3d vector.
-
-    vec - a 3d vector expressed as a list of 3 floats.
-    """
-    return math.sqrt(functools.reduce((lambda x, y: x + y * y), vec, 0.0))
-
-
-def normalize(vec):
-    """Normalize a vector
-
-    vec - python list
-
-    Return normalized vector
-    """
-    if norm(vec) < 1e-6:
-        return [0 for i in xrange(len(vec))]
-    return list(map(lambda x: x / norm(vec), vec))
-
-
-def cross_product(v1, v2):
-    """ Return the cross product of v1, v2.
-
-    v1, v2 - 3d vector expressed as a list of 3 floats.
-    """
-    x3 = v1[1] * v2[2] - v2[1] * v1[2]
-    y3 = -(v1[0] * v2[2] - v2[0] * v1[2])
-    z3 = v1[0] * v2[1] - v2[0] * v1[1]
-    return [x3, y3, z3]
-
-def create_vector(p1, p2):
-    """Contruct a vector going from p1 to p2.
-
-    p1, p2 - python list wth coordinates [x,y,z].
-
-    Return a list [x,y,z] for the coordinates of vector
-    """
-    return list(map((lambda x,y: x-y), p2, p1))
-
-def create_file(titre, color):
-    file = open(titre, "w")
-    if color:
-        file.write("COFF\n")
-    else:
-        file.write("OFF\n")
-    return file
-
-def close_file(file):
-    file.close()
-
-def multiple_write(file, param):
-    for p in param:
-        file.write(str(p))
-        file.write(" ")
-
-def calcul_time(fonction, params):
-    debut = time.time()
-    if params == []:
-        fonction()
-    else:
-        fonction(params[0])
-    fin = time.time()
-    print("\n La fonction\n", fonction, "\n met", fin - debut, "secondes pour s'executer")
-    return fin - debut

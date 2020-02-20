@@ -3,9 +3,10 @@ from . import config
 import math
 import functools
 from .vertex import Vertex
+from .functions import *
 
 class Facet:
-    def __init__(self, a=-1, b=-1, c=-1, index=None, vertex = [], halfedge=None, perimetre = -1, classe = -1, ecart=float("inf")):
+    def __init__(self, a=-1, b=-1, c=-1, index=None, vertex = [], halfedge=None, color=[]):
         """Create a facet with the given index with three vertices.
 
         a, b, c - indices for the vertices in the facet, counter clockwise.
@@ -19,9 +20,10 @@ class Facet:
         self.index = index
         # halfedge going ccw around this facet.
         self.halfedge = halfedge
-        self.perimetre = perimetre
-        self.classe = classe
-        self.ecart = ecart
+        self.perimetre = -1
+        self.classe = -1
+        self.ecart = float("inf")
+        self.color = color
 
     def calcul_perimetre(self):
         perimetre = 0
@@ -101,3 +103,6 @@ class Facet:
         for v in self.vertex:
             file.write(str(v))
             file.write(" ")
+
+        multiple_write(file,self.color)
+        file.write("\n")

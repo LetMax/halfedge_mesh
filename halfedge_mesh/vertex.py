@@ -2,10 +2,11 @@ import sys
 from . import config
 import math
 import functools
+from .functions import *
 
 class Vertex:
 
-    def __init__(self, x=0, y=0, z=0, index=None, halfedge=None):
+    def __init__(self, x=0, y=0, z=0, index=None, halfedge=None, color=[]):
         """Create a vertex with given index at given point.
 
         x        - x-coordinate of the point
@@ -22,6 +23,7 @@ class Vertex:
         self.traiter = False
         self.dist = 0
         self.composante = -1
+        self.color = color
 
         self.index = index
 
@@ -93,3 +95,9 @@ class Vertex:
 
     def get_vertex(self):
         return [self.x, self.y, self.z]
+
+    def write_vertex(self, file):
+        multiple_write(file, [self.x, self.y, self.z])
+        file.write(" ")
+        multiple_write(file,self.color)
+        file.write("\n")

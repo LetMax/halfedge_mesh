@@ -4,6 +4,7 @@ import math
 import functools
 from .facet import Facet
 from .vertex import Vertex
+from .functions import *
 
 class Halfedge:
 

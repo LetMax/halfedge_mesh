@@ -3,7 +3,7 @@ from halfedge_mesh.halfedge_mesh import *
 
 # .off are supported
 
-titres = ["adapter", "bonhomme"]
+titres = ["CC_genre", "adapter", "bonhomme", "strange"]
 # titres = ["adapter"]
 for titre in titres:
     mesh = HalfedgeMesh("figures_normales/"+titre+".off")
@@ -14,15 +14,16 @@ for titre in titres:
     # mesh.color_composante(titre)
     #
     # calcul_time(mesh.geodesique, [mesh.vertices[0]])
-    # calcul_time(mesh.set_composantes_connexes, [])
+    # mesh.color_composante(titre)
     # calcul_time(mesh.genre_by_composante, [])
     # mesh.classification(2)
-    mesh.color_classe(3, titre)
+    mesh.color_classe(2, titre)
+    # mesh.write_mesh(True, titre)
 
-tab = [0] * 50
-for f in mesh.facets :
-    tab[f.classe] += 1
-print(len(mesh.facets))
-print(len(mesh.vertices))
-print(len(mesh.halfedges))
-print(tab)
+# tab = [0] * 50
+# for f in mesh.facets :
+#     tab[f.classe] += 1
+# print(len(mesh.facets))
+# print(len(mesh.vertices))
+# print(len(mesh.halfedges))
+# print(tab)
