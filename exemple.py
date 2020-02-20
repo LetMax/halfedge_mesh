@@ -4,7 +4,7 @@ from halfedge_mesh.halfedge_mesh import *
 # .off are supported
 
 titres = ["CC_genre", "adapter", "bonhomme", "strange"]
-# titres = ["adapter"]
+titres = ["adapter"]
 for titre in titres:
     mesh = HalfedgeMesh("figures_normales/"+titre+".off")
     # print(len(mesh.vertices))

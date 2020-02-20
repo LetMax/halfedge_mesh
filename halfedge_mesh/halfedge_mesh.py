@@ -57,6 +57,32 @@ class HalfedgeMesh:
             self.vertices, self.halfedges, self.facets, self.edges = \
                     self.read_file(filename)
 
+
+    def classification(self, nb_classe):
+        color_tab = [0] * nb_classe
+        for i in range(nb_classe):
+            color_tab[i] = random_color()
+        min = float("inf")
+        max = 0
+
+        for face in self.facets :
+            tmp = calcul_perimetre(face)
+            if tmp < min :
+                min = tmp
+            if tmp > max :
+                max = tmp
+
+        tab_classe = [0] * nb_classe
+        ecart = (max-min)/nb_classe
+        for i in range(len(tab_classe)) :
+            tab_classe[i] = min + (i) * ecart
+
+        for face in self.facets :
+            for i,j in enumerate(tab_classe):
+                if face.perimetre >= j :
+                    face.classe = i
+                    face.color = color_tab[i]
+
     def calcul_compar(self, compar_functions):
         tab_min = [float("inf")] * len(compar_functions)
         tab_max = [0] * len(compar_functions)
@@ -85,17 +111,19 @@ class HalfedgeMesh:
             for i in range(nb_functions):
                 sum[face.classe][i] += face.compar[i]
             count[face.classe] += 1
+        print(count)
         for i in range(nb_classe):
             for j in range(nb_functions):
                 tab_classe[i][j] = sum[i][j]/count[i]
         return tab_classe
 
-    def k_moyenne(self, nb_classe, compar_functions):
+    def k_moyenne(self, nb_classe, compar_functions, poids_functions):
         color_tab = [0] * nb_classe
         for i in range(nb_classe):
             color_tab[i] = random_color()
 
         tab_min, tab_max = self.calcul_compar(compar_functions)
+        print(tab_min, tab_max)
 
         tab_classe = init_classe(nb_classe, len(compar_functions), tab_min, tab_max)
 
@@ -104,47 +132,22 @@ class HalfedgeMesh:
             change = False
             for face in self.facets:
                 for i, j in enumerate(tab_classe):
-                    ecart = face.calcul_ecart(j)
+                    ecart = face.calcul_ecart(j, poids_functions)
                     if face.class_assignation(ecart, i):
                         change = True
 
             tab_classe = self.recalcul_classe(nb_classe, len(compar_functions))
-            print(tab_classe)
+            # print(tab_classe)
 
             for face in self.facets:
-                face.ecart = face.calcul_ecart(tab_classe[face.classe])
+                face.ecart = face.calcul_ecart(tab_classe[face.classe], poids_functions)
 
         for face in self.facets:
             face.color = color_tab[face.classe]
 
 
-    def classification(self, nb_classe):
-        color_tab = [0] * nb_classe
-        for i in range(nb_classe):
-            color_tab[i] = random_color()
-        min = float("inf")
-        max = 0
-
-        for face in self.facets :
-            tmp = calcul_perimetre(face)
-            if tmp < min :
-                min = tmp
-            if tmp > max :
-                max = tmp
-
-        tab_classe = [0] * nb_classe
-        ecart = (max-min)/nb_classe
-        for i in range(len(tab_classe)) :
-            tab_classe[i] = min + (i) * ecart
-
-        for face in self.facets :
-            for i,j in enumerate(tab_classe):
-                if face.perimetre >= j :
-                    face.classe = i
-                    face.color = color_tab[i]
-
     def color_classe(self, nb_classe, titre) :
-        self.k_moyenne(nb_classe, [calcul_perimetre])
+        self.k_moyenne(nb_classe, [calcul_perimetre, calcul_aire], [100,1])
         # self.classification(nb_classe)
         self.write_mesh(True, "figures_classe/" + titre + "ClasseColor.off")
 

@@ -27,12 +27,12 @@ class Facet:
         self.ecart = float("inf")
         self.color = color
 
-    def calcul_ecart(self, classe):
+    def calcul_ecart(self, classe, poids_functions):
         ecart = 0
-        for i, j in zip(self.compar, classe):
-            # print(i,j)
-            ecart += abs(i-j)
+        for i, j, poids in zip(self.compar, classe, poids_functions):
+            ecart += poids*abs(i-j)
         return ecart
+
     def class_assignation(self, ecart, i):
         if ecart < self.ecart :
             self.ecart = ecart
@@ -52,8 +52,8 @@ class Facet:
         tab = [first]
         tmp = self.halfedge
         while tmp.next != first:
-            tab.append(tmp)
             tmp = tmp.next
+            tab.append(tmp)
 
         return tab
 

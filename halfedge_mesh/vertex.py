@@ -37,11 +37,17 @@ class Vertex:
         distcarre = pow(deltaX,2) + pow(deltaY,2) + pow(deltaZ, 2)
         return math.sqrt(distcarre)
 
+    def determinant(self, vert1, vert2):
+        c1 = self.x * (vert1.y * vert2.z - vert1.z * vert2.y)
+        c2 = vert1.x * (self.y * vert2.z - self.z * vert2.y)
+        c3 = vert2.x * (self.y * vert1.z - self.z * vert1.y)
+        return c1 - c2 + c3
+
     def scalar(self, vert1, vert2):
         dist1 = self.distance(vert1)
         dist2 = self.distance(vert2)
         angle = 0
-        return dist1 * dist2 * cos(angle)
+        return dist1 * dist2
 
     def adjacent_vertices(self):
         adj = self.adjacent_halfedges()

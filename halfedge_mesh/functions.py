@@ -145,17 +145,24 @@ def init_classe(nb_classe, nb_functions, tab_min, tab_max):
 
 def calcul_aire(face):
     aire = 0
+    first = face.adjacent_vertices()[0]
     list1 = face.adjacent_vertices()
     list2 = list1[:]
-    first = list1[0]
     del list1[len(list1)-1]
     del list1[0]
     del list2[0]
     del list2[0]
     for i,j in zip(list1, list2):
-        aire += (first.scalar(i,j)/2)
+        t = abs(first.determinant(i,j))
+        if t < 0:
+            print(t)
+        # print(t)
+        aire += (t/2)
     face.aire = aire
     return aire
+
+def test_func(face):
+    return face.halfedge.vertex.z
 
 def calcul_time(fonction, params):
     debut = time.time()
