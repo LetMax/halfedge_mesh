@@ -57,47 +57,66 @@ class HalfedgeMesh:
             self.vertices, self.halfedges, self.facets, self.edges = \
                     self.read_file(filename)
 
-    def k_moyenne(self, nb_classe):
-        color_tab = [0] * nb_classe
-        for i in range(nb_classe):
-            color_tab[i] = random_color()
-        min = float("inf")
-        max = 0
+    def calcul_compar(self, compar_functions):
+        tab_min = [float("inf")] * len(compar_functions)
+        tab_max = [0] * len(compar_functions)
 
         for face in self.facets :
             face.classe = -1
-            tmp = face.calcul_perimetre()
-            if tmp < min :
-                min = tmp
-            if tmp > max :
-                max = tmp
+            face.compar = []
+            for i, function in enumerate(compar_functions):
+                tmp = function(face)
+                face.compar.append(tmp)
+                if tmp < tab_min[i] :
+                    tab_min[i] = tmp
+                if tmp > tab_max[i] :
+                    tab_max[i] = tmp
+        return tab_min, tab_max
 
-        tab_classe = [0] * nb_classe
-        ecart = (max-min)/nb_classe
-        for i in range(nb_classe) :
-            tab_classe[i] = min + (i) * ecart
-            
+    def recalcul_classe(self, nb_classe, nb_functions):
+        sum = [0] * nb_classe
+        tmps = [0] * nb_functions
+
+        for i in range(nb_classe):
+            sum[i] = tmps[:]
+        tab_classe = sum[:]
+        count = [0] * nb_classe
+        for face in self.facets :
+            for i in range(nb_functions):
+                sum[face.classe][i] += face.compar[i]
+            count[face.classe] += 1
+        for i in range(nb_classe):
+            for j in range(nb_functions):
+                tab_classe[i][j] = sum[i][j]/count[i]
+        return tab_classe
+
+    def k_moyenne(self, nb_classe, compar_functions):
+        color_tab = [0] * nb_classe
+        for i in range(nb_classe):
+            color_tab[i] = random_color()
+
+        tab_min, tab_max = self.calcul_compar(compar_functions)
+
+        tab_classe = init_classe(nb_classe, len(compar_functions), tab_min, tab_max)
+
         change = True
         while change:
             change = False
             for face in self.facets:
-                ecart_classe = float("inf")
                 for i, j in enumerate(tab_classe):
-                    if abs(face.perimetre - j) < face.ecart :
-                        face.ecart = abs(face.perimetre - j)
-                        if face.classe != i:
-                            face.classe = i
-                            face.color = color_tab[i]
-                            change = True
-            sum = [0] * nb_classe
-            count = [0] * nb_classe
+                    ecart = face.calcul_ecart(j)
+                    if face.class_assignation(ecart, i):
+                        change = True
+
+            tab_classe = self.recalcul_classe(nb_classe, len(compar_functions))
+            print(tab_classe)
+
             for face in self.facets:
-                sum[face.classe] += face.perimetre
-                count[face.classe] += 1
-            for i in range(nb_classe):
-                tab_classe[i] = sum[i]/count[i]
-            for face in self.facets:
-                face.ecart = abs(face.perimetre - tab_classe[face.classe])
+                face.ecart = face.calcul_ecart(tab_classe[face.classe])
+
+        for face in self.facets:
+            face.color = color_tab[face.classe]
+
 
     def classification(self, nb_classe):
         color_tab = [0] * nb_classe
@@ -107,7 +126,7 @@ class HalfedgeMesh:
         max = 0
 
         for face in self.facets :
-            tmp = face.calcul_perimetre()
+            tmp = calcul_perimetre(face)
             if tmp < min :
                 min = tmp
             if tmp > max :
@@ -125,7 +144,7 @@ class HalfedgeMesh:
                     face.color = color_tab[i]
 
     def color_classe(self, nb_classe, titre) :
-        self.k_moyenne(nb_classe)
+        self.k_moyenne(nb_classe, [calcul_perimetre])
         # self.classification(nb_classe)
         self.write_mesh(True, "figures_classe/" + titre + "ClasseColor.off")
 

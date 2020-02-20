@@ -37,6 +37,12 @@ class Vertex:
         distcarre = pow(deltaX,2) + pow(deltaY,2) + pow(deltaZ, 2)
         return math.sqrt(distcarre)
 
+    def scalar(self, vert1, vert2):
+        dist1 = self.distance(vert1)
+        dist2 = self.distance(vert2)
+        angle = 0
+        return dist1 * dist2 * cos(angle)
+
     def adjacent_vertices(self):
         adj = self.adjacent_halfedges()
         tab = []

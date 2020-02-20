@@ -21,16 +21,24 @@ class Facet:
         # halfedge going ccw around this facet.
         self.halfedge = halfedge
         self.perimetre = -1
+        self.air = -1
+        self.compar = []
         self.classe = -1
         self.ecart = float("inf")
         self.color = color
 
-    def calcul_perimetre(self):
-        perimetre = 0
-        for v in self.adjacent_halfedges():
-            perimetre += v.calcul_distance()
-        self.perimetre = perimetre
-        return perimetre
+    def calcul_ecart(self, classe):
+        ecart = 0
+        for i, j in zip(self.compar, classe):
+            # print(i,j)
+            ecart += abs(i-j)
+        return ecart
+    def class_assignation(self, ecart, i):
+        if ecart < self.ecart :
+            self.ecart = ecart
+            if self.classe != i:
+                self.classe = i
+                return True
 
     def adjacent_vertices(self):
         halfedges = self.adjacent_halfedges()
@@ -40,8 +48,8 @@ class Facet:
         return tab
 
     def adjacent_halfedges(self):
-        tab = []
         first = self.halfedge
+        tab = [first]
         tmp = self.halfedge
         while tmp.next != first:
             tab.append(tmp)

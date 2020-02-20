@@ -17,8 +17,11 @@ for titre in titres:
     # mesh.color_composante(titre)
     # calcul_time(mesh.genre_by_composante, [])
     # mesh.classification(2)
+    print(len(mesh.facets))
     mesh.color_classe(2, titre)
     # mesh.write_mesh(True, titre)
+# for f in mesh.facets:
+#     f.calcul_aire()
 
 # tab = [0] * 50
 # for f in mesh.facets :

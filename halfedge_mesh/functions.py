@@ -123,6 +123,40 @@ def random_color():
     tmp.append(random.uniform(0, 1) * 255)
     return tmp
 
+def calcul_perimetre(face):
+    perimetre = 0
+    for v in face.adjacent_halfedges():
+        perimetre += v.calcul_distance()
+    face.perimetre = perimetre
+    return perimetre
+
+def init_classe(nb_classe, nb_functions, tab_min, tab_max):
+    tab_classe = [0] * nb_classe
+    tmps = [0] * nb_functions
+    ecart_tab = [0] * nb_functions
+    for j in range(len(ecart_tab)):
+        ecart_tab[j] = (tab_max[j]-tab_min[j])/nb_classe
+    for i in range(nb_classe) :
+        tab_classe[i] = tmps[:]
+        for j in range(nb_functions):
+            tab_classe[i][j] = tab_min[j] + i * ecart_tab[j]
+    return tab_classe
+
+
+def calcul_aire(face):
+    aire = 0
+    list1 = face.adjacent_vertices()
+    list2 = list1[:]
+    first = list1[0]
+    del list1[len(list1)-1]
+    del list1[0]
+    del list2[0]
+    del list2[0]
+    for i,j in zip(list1, list2):
+        aire += (first.scalar(i,j)/2)
+    face.aire = aire
+    return aire
+
 def calcul_time(fonction, params):
     debut = time.time()
     if params == []:
