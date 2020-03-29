@@ -29,6 +29,16 @@ class Vertex:
 
         self.halfedge = halfedge
 
+    def init_for_composante(self):
+        self.composante = -1
+        self.traiter = False
+        self.vu = False
+
+    def set_in_composante(self, composante, tab_color):
+        self.vu = True
+        self.composante = composante
+        self.color = tab_color
+
     def distance(self, S2) :
         S1 = self
         deltaX = abs(S1.x - S2.x)

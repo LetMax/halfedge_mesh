@@ -111,10 +111,12 @@ class HalfedgeMesh:
             for i in range(nb_functions):
                 sum[face.classe][i] += face.compar[i]
             count[face.classe] += 1
-        print(count)
         for i in range(nb_classe):
             for j in range(nb_functions):
-                tab_classe[i][j] = sum[i][j]/count[i]
+                if count[i] != 0:
+                    tab_classe[i][j] = sum[i][j]/count[i]
+                else:
+                    tab_classe[i][j] = 0
         return tab_classe
 
     def k_moyenne(self, nb_classe, compar_functions, poids_functions):
@@ -123,7 +125,6 @@ class HalfedgeMesh:
             color_tab[i] = random_color()
 
         tab_min, tab_max = self.calcul_compar(compar_functions)
-        print(tab_min, tab_max)
 
         tab_classe = init_classe(nb_classe, len(compar_functions), tab_min, tab_max)
 
@@ -137,7 +138,6 @@ class HalfedgeMesh:
                         change = True
 
             tab_classe = self.recalcul_classe(nb_classe, len(compar_functions))
-            # print(tab_classe)
 
             for face in self.facets:
                 face.ecart = face.calcul_ecart(tab_classe[face.classe], poids_functions)
@@ -145,43 +145,78 @@ class HalfedgeMesh:
         for face in self.facets:
             face.color = color_tab[face.classe]
 
-
-    def color_classe(self, nb_classe, titre) :
-        self.k_moyenne(nb_classe, [calcul_perimetre, calcul_aire], [100,1])
-        # self.classification(nb_classe)
+    def color_classe(self, nb_classe, compar_functions, poids_functions, titre) :
+        self.k_moyenne(nb_classe, compar_functions, poids_functions)
         self.write_mesh(True, "figures_classe/" + titre + "ClasseColor.off")
 
-    def set_composantes_connexes(self) :
-        tab = random_color()
+    def color_composante_with_class(self, nb_classe, compar_functions, poids_functions, titre):
+        self.k_moyenne(nb_classe, compar_functions, poids_functions)
+        self.set_composantes_connexes_with_classes()
+        self.write_mesh(True, "figures_classe_compo/" + titre + "ClasseCompoColor.off")
 
+    def new_composante(self, composante, s):
+        composante += 1
+        tab_color = random_color()
+        s.composante = composante
+        return tab_color, composante
+
+    def set_composantes_connexes_with_classes(self):
+        tab_color = random_color()
+        composante_tmp = []
         composante = 1
+
+        nb_facet = len(self.facets)
+        for f in self.facets :
+            f.init_for_composante()
+
+        s = self.facets[0]
+        s.set_in_composante(composante, tab_color)
+        s.traiter = True
+        nb_facet -= 1
+
+        while nb_facet > 0 :
+            voisins = s.adjacent_faces()
+            for v in voisins:
+                if v.vu == False and v.classe == s.classe:
+                    composante_tmp.append(v)
+                    v.set_in_composante(composante, tab_color)
+
+            if len(composante_tmp) == 0 :
+                s = self.retrieve_face()
+                tab_color, composante = self.new_composante(composante, s)
+            else:
+                s = composante_tmp[0]
+                del composante_tmp[0]
+
+            if s.traiter == False:
+                s.traiter = True
+                nb_facet -= 1
+        return composante
+
+    def set_composantes_connexes(self) :
+        tab_color = random_color()
+        composante_tmp = []
+        composante = 1
+
         nb_vert = len(self.vertices)
         for v in self.vertices :
-            v.composante = -1
-            v.traiter = False
-            v.vu = False
+            v.init_for_composante()
 
         s = self.vertices[0]
+        s.set_in_composante(composante, tab_color)
         s.traiter = True
-        s.vu = True
         nb_vert -= 1
-        s.composante = composante
-        composante_tmp = []
 
         while nb_vert > 0 :
             voisins = s.adjacent_vertices()
             for v in voisins:
                 if v.vu == False:
                     composante_tmp.append(v)
-                    v.composante = composante
-                    v.color = tab
-                    v.vu = True
+                    v.set_in_composante(composante, tab_color)
 
             if len(composante_tmp) == 0 :
                 s = self.retrieve_vert()
-                composante += 1
-                tab = random_color()
-                s.composante = composante
+                tab_color, composante = self.new_composante(composante, s)
             else:
                 s = composante_tmp[0]
                 del composante_tmp[0]
@@ -242,6 +277,11 @@ class HalfedgeMesh:
         for vert in self.vertices:
             vert.color = tab[vert.composante-1]
 
+
+    def retrieve_face(self):
+        for face in self.facets:
+            if face.traiter == False:
+                return face
 
     def retrieve_vert(self):
         for vert in self.vertices:

@@ -20,12 +20,25 @@ class Facet:
         self.index = index
         # halfedge going ccw around this facet.
         self.halfedge = halfedge
+        self.vu = False
+        self.traiter = False
         self.perimetre = -1
+        self.composante = -1
         self.air = -1
         self.compar = []
         self.classe = -1
         self.ecart = float("inf")
         self.color = color
+
+    def init_for_composante(self):
+        self.composante = -1
+        self.traiter = False
+        self.vu = False
+
+    def set_in_composante(self, composante, tab_color):
+        self.vu = True
+        self.composante = composante
+        self.color = tab_color
 
     def calcul_ecart(self, classe, poids_functions):
         ecart = 0
