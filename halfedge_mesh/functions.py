@@ -101,6 +101,7 @@ def multiple_write(file, param):
     for p in param:
         file.write(str(p))
         file.write(" ")
+
 def count_bord(tab_halfedge):
     nb_bord = 0
 
@@ -130,6 +131,9 @@ def calcul_perimetre(face):
     face.perimetre = perimetre
     return perimetre
 
+def return_z(face):
+    return face.halfedge.vertex.z
+
 def init_classe(nb_classe, nb_functions, tab_min, tab_max):
     tab_classe = [0] * nb_classe
     tmps = [0] * nb_functions
@@ -142,7 +146,6 @@ def init_classe(nb_classe, nb_functions, tab_min, tab_max):
             tab_classe[i][j] = tab_min[j] + i * ecart_tab[j]
     return tab_classe
 
-
 def calcul_aire(face):
     aire = 0
     first = face.adjacent_vertices()[0]
@@ -154,15 +157,9 @@ def calcul_aire(face):
     del list2[0]
     for i,j in zip(list1, list2):
         t = abs(first.determinant(i,j))
-        if t < 0:
-            print(t)
-        # print(t)
         aire += (t/2)
     face.aire = aire
     return aire
-
-def test_func(face):
-    return face.halfedge.vertex.z
 
 def calcul_time(fonction, params):
     debut = time.time()
